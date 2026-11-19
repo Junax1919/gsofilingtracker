@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f4e8c" id="metaTheme">
+<title>GSO Filing System</title>
+<link id="fav" rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f4e8c'/%3E%3Cpath d='M10 7h8l5 5v13H10z' fill='%23fff'/%3E%3Cpath d='M13 17h7M13 21h7' stroke='%231f4e8c' stroke-width='1.6'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f3f5f9;--card:#fff;--ink:#1b2434;--mute:#667085;--line:#e3e7ee;--brand:#1f4e8c;--brand2:#2f6fd0;--side:#13223a;--sideink:#c7d3e6;--ok:#12805c;--err:#c0262d;--r:12px;--sh:0 1px 3px rgba(16,24,40,.08),0 1px 2px rgba(16,24,40,.04);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-size:14px;-webkit-text-size-adjust:100%}
+[hidden]{display:none!important}
+.ic{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+button{font:inherit;cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--brand2);outline-offset:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:#fff;color:var(--ink);padding:9px 14px;border-radius:8px;font-weight:600;min-height:40px}
+.btn:hover{background:#f7f9fc}.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}.btn.pri:hover{background:var(--brand2)}.btn.dng{background:var(--err);border-color:var(--err);color:#fff}.btn:disabled{opacity:.6;cursor:wait}
+.icon-btn{border:0;background:none;color:var(--mute);padding:8px;border-radius:6px;line-height:0}.icon-btn:hover{background:#eef2f8;color:var(--brand)}.icon-btn.del:hover{color:var(--err)}
+#loginView{min-height:100vh;display:grid;place-items:center;padding:16px;background:linear-gradient(135deg,var(--side),var(--brand))}
+.login{background:#fff;width:100%;max-width:380px;padding:32px;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.login h1{margin:0 0 4px;font-size:22px}.login p{margin:0 0 24px;color:var(--mute)}
+label{display:block;font-weight:600;margin:0 0 6px;font-size:13px}.fld{margin-bottom:16px}
+input,select,textarea{width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid #cfd6e2;border-radius:8px;background:#fff;color:var(--ink)}
+input[type=checkbox]{width:18px;height:18px;padding:0;accent-color:var(--brand)}textarea{min-height:90px;resize:vertical}.err{color:var(--err);min-height:20px;font-size:13px;margin:0 0 12px}
+.pw{position:relative}.pw input{padding-right:46px}.pw .icon-btn{position:absolute;right:4px;top:50%;transform:translateY(-50%)}
+.app{display:flex;min-height:100vh}
+.side{width:248px;background:var(--side);color:var(--sideink);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;transition:width .2s ease,transform .2s ease;z-index:40}
+.brand{display:flex;align-items:center;gap:12px;padding:0 22px;height:64px;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-weight:700;white-space:nowrap;overflow:hidden}
+.brand .logo{width:28px;height:28px;border-radius:8px;background:var(--brand2);display:grid;place-items:center;flex:none}
+.nav{padding:12px;display:flex;flex-direction:column;gap:4px}.nav.main{flex:1}.nav.foot{border-top:1px solid rgba(255,255,255,.08)}
+.nav-item{position:relative;display:flex;align-items:center;gap:14px;width:100%;padding:12px;border:0;background:none;color:inherit;border-radius:8px;text-align:left;white-space:nowrap}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}.nav-item.on{background:var(--brand2);color:#fff}
+.nav-item::after{content:attr(data-tip);position:absolute;left:calc(100% + 12px);top:50%;transform:translateY(-50%);background:#0b1426;color:#fff;padding:6px 10px;border-radius:6px;font-size:12px;opacity:0;pointer-events:none;transition:opacity .15s;white-space:nowrap;box-shadow:0 4px 12px rgba(0,0,0,.3)}
+.collapsed .side{width:72px}.collapsed .lbl{display:none}.collapsed .nav-item:hover::after,.collapsed .nav-item:focus-visible::after{opacity:1}
+.scrim{position:fixed;inset:0;background:rgba(10,18,32,.5);z-index:30}
+main{flex:1;min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:10px;height:64px;padding:0 20px 0 12px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+.top h2{margin:0;font-size:18px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.chip{display:flex;flex-direction:column;align-items:flex-end;line-height:1.25;text-align:right}.chip small{color:var(--mute)}
+.top .icon-btn{color:var(--ink);padding:10px}
+.page{padding:24px;max-width:1360px;width:100%}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh)}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px;margin-bottom:16px}
+.stat{padding:18px}.stat b{display:block;font-size:28px;margin-top:4px}.stat span{color:var(--mute)}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}.two .card{padding:18px}.two h3{margin:0 0 12px;font-size:15px}
+.bar{display:grid;grid-template-columns:minmax(110px,40%) 1fr 36px;gap:10px;align-items:center;margin-bottom:8px;font-size:13px}
+.bar i{height:8px;border-radius:99px;background:#e9eef7;position:relative;overflow:hidden}.bar i::after{content:"";position:absolute;inset:0 auto 0 0;width:var(--w);background:var(--brand2);border-radius:99px}.bar b{text-align:right}
+.tools{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px}.tools .grow{flex:1;min-width:200px;position:relative}.tools .grow .ic{position:absolute;left:11px;top:10px;color:var(--mute)}.tools .grow input{padding-left:38px}.tools select{width:auto;max-width:220px}
+.tw{overflow-x:auto}table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);padding:12px 14px;background:#f8fafc;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}tbody tr:hover td{background:#fafbfe}tr[data-id]{cursor:pointer}
+.loc b{display:block}.loc span{color:var(--mute);font-size:12px;white-space:nowrap}
+.desc{white-space:pre-line;max-width:380px;max-height:7.5em;overflow:hidden}.rem{max-width:200px;white-space:pre-line;color:var(--mute)}
+.badge{display:inline-block;padding:3px 9px;border-radius:99px;background:#e8f0fc;color:var(--brand);font-size:12px;font-weight:600;margin:0 4px 4px 0}.badge.alt{background:#fdf2e3;color:#a15c07}.badge.off{background:#fde8e8;color:var(--err)}.badge.ok{background:#e3f6ee;color:var(--ok)}
+.act{white-space:nowrap;text-align:right}.mute,.empty{color:var(--mute)}.empty{text-align:center;padding:40px!important}
+.pager{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;color:var(--mute);gap:10px;flex-wrap:wrap}.pn{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.pl{display:inline-flex;align-items:center;gap:6px;margin:0;font-weight:400}.pl select{width:auto;padding:7px 8px;font-size:14px}.pend td{opacity:.55}.icon-btn.has{color:var(--brand)}.me{display:flex;align-items:center;gap:10px;background:none;border:0;padding:4px 8px;border-radius:10px;color:inherit;text-align:right}.me:hover{background:#eef2f8}.av{width:38px;height:38px;border-radius:50%;background:var(--brand2);color:#fff;display:grid;place-items:center;font-weight:700;overflow:hidden;flex:none}.av img{width:100%;height:100%;object-fit:cover}.av.lg{width:96px;height:96px;font-size:32px}.prow{display:flex;align-items:center;gap:16px;margin-bottom:18px;flex-wrap:wrap}.sec{border-top:1px solid var(--line);margin:6px 0 16px;padding-top:16px}.sec h4{margin:0 0 4px;font-size:14px}
+dialog{border:0;border-radius:16px;padding:0;width:min(660px,94vw);max-height:92vh;overflow:auto;box-shadow:0 24px 60px rgba(0,0,0,.35)}dialog::backdrop{background:rgba(10,18,32,.55)}
+dialog form,dialog .dbody{padding:24px}dialog h3{margin:0 0 16px;font-size:18px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0 16px}.grid .full{grid-column:1/-1}
+.foot{display:flex;justify-content:flex-end;gap:10px;margin-top:8px;flex-wrap:wrap}.hint{font-weight:400;color:var(--mute);font-size:12px}
+.dl{display:grid;grid-template-columns:repeat(2,1fr);gap:14px 20px;margin:0 0 16px}.dl .full{grid-column:1/-1}.dl dt{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute);font-weight:700}.dl dd{margin:2px 0 0;white-space:pre-wrap;word-break:break-word}
+.formcard{padding:24px;max-width:720px}.sw{width:44px;height:44px;border-radius:50%;border:3px solid #fff;background:var(--c);box-shadow:0 0 0 1px var(--line);margin:0 8px 8px 0}.sw[aria-pressed=true]{box-shadow:0 0 0 3px var(--c)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-weight:600}
+#toasts{position:fixed;right:16px;bottom:16px;left:16px;display:flex;flex-direction:column;align-items:flex-end;gap:8px;z-index:100;pointer-events:none}
+.toast{background:#101828;color:#fff;padding:12px 16px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:340px;pointer-events:auto}.toast.bad{background:var(--err)}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid #cfd6e2;border-top-color:var(--brand2);border-radius:50%;animation:sp .8s linear infinite;vertical-align:middle;margin-right:8px}@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:560px){.me .chip{display:none}}
+@media(max-width:800px){
+ .side{position:fixed;left:0;top:0;transform:translateX(-100%);width:268px!important}.mopen .side{transform:none;box-shadow:0 0 40px rgba(0,0,0,.4)}
+ .collapsed .lbl{display:inline}.nav-item::after{display:none}.page{padding:14px}.top{padding:0 12px 0 6px}.chip small{display:none}
+ .tools select,.tools .btn{flex:1 1 140px;max-width:none}.grid,.dl{grid-template-columns:1fr}dialog{width:100vw;max-width:100vw;max-height:100vh;border-radius:16px 16px 0 0;margin:auto 0 0}
+ dialog form,dialog .dbody{padding:18px}.foot .btn{flex:1}.formcard{padding:16px}.pager{justify-content:center}
+}
+@media(max-width:700px){
+ .rt thead{display:none}.rt,.rt tbody,.rt tr,.rt td{display:block;width:100%}.rt tr{padding:10px 2px;border-bottom:8px solid var(--bg)}
+ .rt td{display:flex;gap:12px;border:0;padding:5px 12px;max-width:none}.rt td::before{content:attr(data-label);flex:0 0 88px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--mute);font-weight:700;padding-top:2px}
+ .rt td>*{min-width:0}.rt td.act{justify-content:flex-end}.rt td.act::before,.rt td.empty::before{display:none}.desc,.rem{max-width:none}.rt .loc span{white-space:normal}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+<symbol id="i-dash" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol>
+<symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h8"/></symbol>
+<symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></symbol>
+<symbol id="i-out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+<symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+<symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+<symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-eyeoff" viewBox="0 0 24 24"><path d="M17.9 17.9A10 10 0 0 1 12 19c-6.4 0-10-7-10-7a17 17 0 0 1 4.1-4.9M9.9 5.2A9 9 0 0 1 12 5c6.4 0 10 7 10 7a17 17 0 0 1-2.2 3.2M1 1l22 22M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+<symbol id="i-log" viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/><rect x="9" y="3" width="6" height="4" rx="1"/><path d="M9 12h6M9 16h6"/></symbol>
+<symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+</defs></svg>
+
+<section id="loginView" hidden>
+  <form class="login" id="login" autocomplete="on">
+    <h1 class="sysname">GSO Filing System</h1><p id="orgName">Sign in to access the records.</p>
+    <div class="fld"><label for="u">Username</label><input id="u" autocomplete="username" required></div>
+    <div class="fld"><label for="p">Password</label><div class="pw"><input id="p" type="password" autocomplete="current-password" required>
+      <button type="button" class="icon-btn" id="pwT" aria-label="Show password" aria-pressed="false" title="Show / hide password"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+    <p class="err" id="loginErr" role="alert"></p>
+    <button class="btn pri" id="loginBtn" style="width:100%">Sign in</button>
+  </form>
+</section>
+
+<div class="app" id="appView" hidden>
+  <div class="scrim" id="scrim" hidden></div>
+  <aside class="side" aria-label="Sidebar">
+    <div class="brand"><span class="logo"><svg class="ic" style="width:16px;height:16px"><use href="#i-file"/></svg></span><span class="lbl sysname">GSO Filing</span></div>
+    <nav class="nav main" id="nav" aria-label="Main"></nav>
+    <nav class="nav foot" id="navFoot" aria-label="Account"></nav>
+  </aside>
+  <main>
+    <header class="top"><button class="icon-btn" id="toggle" aria-label="Toggle sidebar" aria-expanded="true" title="Toggle sidebar"><svg class="ic"><use href="#i-menu"/></svg></button>
+      <h2 id="title">Dashboard</h2><button class="me" id="me" aria-label="My profile" title="My profile &amp; settings"><span class="av" id="meAv"></span><span class="chip"><b id="who"></b><small id="role"></small></span></button></header>
+
+    <section class="page" id="pg-dashboard"><div class="stats" id="stats"></div>
+      <div class="two"><div class="card"><h3>Records by document type</h3><div id="byType"></div></div><div class="card"><h3>Records by cabinet &amp; drawer</h3><div id="byLoc"></div></div></div></section>
+
+    <section class="page" id="pg-records" hidden>
+      <div class="tools">
+        <div class="grow"><svg class="ic"><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search folder, description, title no., remarks…" aria-label="Search records"></div>
+        <select id="fCab" aria-label="Filter by cabinet"></select><select id="fType" aria-label="Filter by document type"></select>
+        <button class="btn" id="refresh" title="Reload from server"><svg class="ic"><use href="#i-refresh"/></svg>Refresh</button>
+        <button class="btn pri" id="add"><svg class="ic"><use href="#i-plus"/></svg>Add record</button>
+      </div>
+      <div class="card"><div class="tw"><table class="rt"><thead><tr><th>Location</th><th>Folder</th><th>File description</th><th>Type</th><th>Remarks</th><th style="text-align:right">Action</th></tr></thead><tbody id="recBody"></tbody></table></div>
+        <div class="pager" id="pgr-rec"></div></div>
+      <p class="mute" style="margin:10px 4px">Tip: double-click a row (or tap the eye icon) to see the full record.</p>
+    </section>
+
+    <section class="page" id="pg-audit" hidden>
+      <div class="tools"><div class="grow"><svg class="ic"><use href="#i-search"/></svg><input id="aq" type="search" placeholder="Search user, action, record ID, details…" aria-label="Search audit logs"></div>
+        <select id="aAct" aria-label="Filter by action"></select><button class="btn" id="aRef"><svg class="ic"><use href="#i-refresh"/></svg>Refresh</button></div>
+      <div class="card"><div class="tw"><table class="rt"><thead><tr><th>Date &amp; time</th><th>User</th><th>Action</th><th>Entity</th><th>Record / target</th><th>Details</th></tr></thead><tbody id="audBody"></tbody></table></div>
+        <div class="pager" id="pgr-aud"></div></div>
+      <p class="mute" style="margin:10px 4px">Shows the latest 1,000 activities. Every sign-in, view, add, edit, delete, user and settings change is recorded automatically.</p>
+    </section>
+
+    <section class="page" id="pg-users" hidden>
+      <div class="tools"><span style="flex:1"></span><button class="btn pri" id="addUser"><svg class="ic"><use href="#i-plus"/></svg>Add user</button></div>
+      <div class="card"><div class="tw"><table class="rt"><thead><tr><th>Username</th><th>Name</th><th>Email</th><th>Role</th><th>Division</th><th>Cabinets</th><th>Status</th><th>Last login</th><th style="text-align:right">Action</th></tr></thead><tbody id="usrBody"></tbody></table></div><div class="pager" id="pgr-usr"></div></div>
+    </section>
+
+    <section class="page" id="pg-setup" hidden>
+      <form class="card formcard" id="setForm" novalidate>
+        <div class="grid">
+          <div class="fld full"><label for="sName">System name</label><input id="sName" name="systemName" maxlength="60" required></div>
+          <div class="fld full"><label for="sOrg">Office / organization <span class="hint">— shown on the login page</span></label><input id="sOrg" name="orgName" maxlength="80"></div>
+          <div class="fld full"><label id="thLbl">Color theme</label><div id="swatches" role="group" aria-labelledby="thLbl"></div></div>
+          <div class="fld"><label for="sPage">Default rows per table</label><select id="sPage" name="pageSize"><option value="10">10</option><option value="30">30</option><option value="50">50</option><option value="all">All</option></select></div>
+          <div class="fld"><label for="sSess">Session length</label><select id="sSess" name="sessionHours"><option value="1">1 hour</option><option value="2">2 hours</option><option value="3">3 hours</option><option value="4">4 hours</option><option value="5">5 hours</option><option value="6">6 hours</option></select></div>
+        </div>
+        <p class="err" id="setErr" role="alert"></p><div class="foot"><button class="btn pri" id="setSave">Save settings</button></div>
+      </form>
+    </section>
+  </main>
+</div>
+
+<dialog id="recDlg"><form id="recForm" method="dialog" novalidate>
+  <h3 id="recTitle">Add record</h3><input type="hidden" name="ID"><input type="hidden" name="Version">
+  <div class="grid">
+    <div class="fld"><label for="fc">Cabinet # *</label><input id="fc" name="Cabinet" list="dlCab" required></div>
+    <div class="fld"><label for="fd">Drawer # *</label><input id="fd" name="Drawer" required></div>
+    <div class="fld"><label for="ff">Folder #</label><input id="ff" name="FolderNo"></div>
+    <div class="fld"><label for="fi">File #</label><input id="fi" name="FileNo"></div>
+    <div class="fld full"><label for="fn">Folder name</label><input id="fn" name="FolderName" list="dlFolder"></div>
+    <div class="fld full"><label for="fx">File description</label><textarea id="fx" name="Description"></textarea></div>
+    <div class="fld"><label for="ft">Document type</label><select id="ft" name="DocType"></select></div>
+    <div class="fld"><label for="fy">Copy type</label><select id="fy" name="CopyType"></select></div>
+    <div class="fld" id="newDocW" hidden><label for="newDoc">New document type</label><input id="newDoc" maxlength="60" placeholder="e.g. Certificate of Title"></div>
+    <div class="fld" id="newCopyW" hidden><label for="newCopy">New copy type</label><input id="newCopy" maxlength="60" placeholder="e.g. Certified True Copy"></div>
+    <div class="fld full"><label for="fr">Remarks</label><input id="fr" name="Remarks"></div>
+    <div class="fld full" id="fileW" hidden><label for="fa">Attachment <span class="hint">— PDF, up to 8 MB</span></label><input id="fa" type="file" accept="application/pdf,.pdf"><p class="hint" id="faInfo" style="margin:6px 0 0"></p>
+      <label class="chk" id="faRmW" hidden style="margin-top:6px"><input type="checkbox" id="faRm"><span>Remove the current attachment</span></label></div>
+  </div>
+  <datalist id="dlCab"></datalist><datalist id="dlFolder"></datalist>
+  <p class="err" id="recErr" role="alert"></p>
+  <div class="foot"><button type="button" class="btn" data-close="recDlg">Cancel</button><button class="btn pri" id="recSave">Save</button></div>
+</form></dialog>
+
+<dialog id="viewDlg"><div class="dbody"><h3 id="viewTitle">Record details</h3><dl class="dl" id="viewBody"></dl>
+  <div class="foot"><button class="btn" data-close="viewDlg">Close</button><button class="btn" id="viewFile" hidden><svg class="ic"><use href="#i-file"/></svg>Open PDF</button><button class="btn" id="viewEdit"><svg class="ic"><use href="#i-edit"/></svg>Edit</button><button class="btn dng" id="viewDel"><svg class="ic"><use href="#i-trash"/></svg>Delete</button></div></div></dialog>
+
+<dialog id="delDlg"><form id="delForm" method="dialog"><h3>Delete this record?</h3><p id="delInfo"></p><p class="mute">It is hidden from the system and kept in the sheet (Status = Deleted) so an administrator can restore it.</p>
+  <p class="err" id="delErr" role="alert"></p><div class="foot"><button type="button" class="btn" data-close="delDlg">Cancel</button><button class="btn dng" id="delBtn">Delete</button></div></form></dialog>
+
+<dialog id="usrDlg"><form id="usrForm" method="dialog" novalidate>
+  <h3 id="usrTitle">Add user</h3>
+  <div class="grid">
+    <div class="fld"><label for="uu">Username *</label><input id="uu" name="username" required autocapitalize="none"></div>
+    <div class="fld"><label for="un">Full name</label><input id="un" name="fullName"></div>
+    <div class="fld full"><label for="ue">Email</label><input id="ue" name="email" type="email" autocomplete="off" inputmode="email" maxlength="120" placeholder="name@example.com"></div>
+    <div class="fld"><label for="ur">Role</label><select id="ur" name="role"></select></div>
+    <div class="fld"><label for="us">Status</label><select id="us" name="status"><option>Active</option><option>Inactive</option></select></div>
+    <div class="fld full"><label for="ud">Division <span class="hint">— only Admins can assign or change this</span></label><select id="ud" name="division"></select></div>
+    <div class="fld full"><label for="uc">Cabinet access <span class="hint">— * for all, or a comma list e.g. 7286, MAPS DRAWERS</span></label><input id="uc" name="cabinets" value="*"></div>
+    <div class="fld full"><label for="up">Password <span class="hint" id="upHint">— 8+ characters, letters and numbers</span></label><div class="pw"><input id="up" name="password" type="password" autocomplete="new-password">
+      <button type="button" class="icon-btn" id="upT" aria-label="Show password" aria-pressed="false" title="Show / hide password"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+  </div>
+  <p class="err" id="usrErr" role="alert"></p>
+  <div class="foot"><button type="button" class="btn" data-close="usrDlg">Cancel</button><button class="btn pri" id="usrSave">Save</button></div>
+</form></dialog>
+<dialog id="proDlg"><form id="proForm" method="dialog" novalidate>
+  <h3>My profile</h3>
+  <div class="prow"><span class="av lg" id="proAv"></span><div><button type="button" class="btn" id="proUp">Upload photo</button> <button type="button" class="btn" id="proRm">Remove</button>
+    <input type="file" id="proFile" accept="image/*" hidden><p class="hint" style="margin:8px 0 0">JPG or PNG. It is cropped to a square and resized automatically.</p></div></div>
+  <div class="grid">
+    <div class="fld full"><label for="pn">Full name</label><input id="pn" name="fullName" maxlength="80" required></div>
+    <div class="fld full"><label for="pe">Email</label><input id="pe" name="email" type="email" maxlength="120" inputmode="email" placeholder="name@example.com"></div>
+  </div>
+  <div class="sec"><h4>Change password</h4><p class="hint" style="margin:0 0 12px">Leave blank to keep your current password. 8+ characters with letters and numbers.</p>
+    <div class="fld"><label for="pc">Current password</label><div class="pw"><input id="pc" name="currentPassword" type="password" autocomplete="current-password"><button type="button" class="icon-btn" data-pw="pc" aria-label="Show password" aria-pressed="false" title="Show / hide password"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+    <div class="grid"><div class="fld"><label for="pp">New password</label><div class="pw"><input id="pp" name="newPassword" type="password" autocomplete="new-password"><button type="button" class="icon-btn" data-pw="pp" aria-label="Show password" aria-pressed="false" title="Show / hide password"><svg class="ic"><use href="#i-eye"/></svg></button></div></div>
+    <div class="fld"><label for="pq">Confirm new password</label><div class="pw"><input id="pq" name="confirm" type="password" autocomplete="new-password"><button type="button" class="icon-btn" data-pw="pq" aria-label="Show password" aria-pressed="false" title="Show / hide password"><svg class="ic"><use href="#i-eye"/></svg></button></div></div></div></div>
+  <p class="err" id="proErr" role="alert"></p>
+  <div class="foot"><button type="button" class="btn" data-close="proDlg">Cancel</button><button class="btn pri" id="proSave">Save changes</button></div>
+</form></dialog>
+<div id="toasts" aria-live="polite"></div>
+<script>
+const CONFIG = { API_URL: 'https://script.google.com/macros/s/AKfycbzAouoPE6ZTJlWG89p1XxyfQV2zpx3XS7Y_R8xSRNuF1Z70RFE6qkFzMsyCHddlQPQ/exec' };
+const THEMES = { blue: ['#1f4e8c', '#2f6fd0', '#13223a'], green: ['#1b6b4a', '#2a9d6f', '#10291f'], purple: ['#5b3a99', '#7c5cc4', '#1e1633'], teal: ['#0f6b73', '#1796a1', '#0d2a2e'], crimson: ['#9b2335', '#c8394d', '#2b1017'], slate: ['#334155', '#475569', '#0f172a'] };
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v == null ? '' : v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const S = { token: sessionStorage.getItem('gso_token'), user: null, perms: [], records: [], users: [], logs: [], docTypes: [], copyTypes: [], roles: [], divisions: [], settings: {}, page: 'dashboard', q: '', cab: '', type: '', pg: 1, apg: 1, view: null };
+const can = (p) => S.perms.indexOf(p) > -1;
+const collator = new Intl.Collator(undefined, { numeric: true }); // one shared collator: far faster sorting than localeCompare per call
+const nat = (a, b) => collator.compare(String(a), String(b));
+const ico = (n) => '<svg class="ic"><use href="#i-' + n + '"/></svg>';
+const isMobile = () => window.innerWidth <= 800;
+const TITLES = { dashboard: 'Dashboard', records: 'Filing Records', audit: 'Audit Logs', users: 'Users & Roles', setup: 'System Setup' };
+
+async function api(action, data) {
+  let res, j;
+  try { res = await fetch(CONFIG.API_URL, { method: 'POST', body: JSON.stringify({ action: action, token: S.token, data: data || {} }) }); }
+  catch (e) { throw new Error('Cannot reach the server. Check your internet connection and the Web App URL.'); }
+  try { j = await res.json(); } catch (e) { throw new Error('Unexpected server reply. Re-deploy the Web App (new version, access: Anyone).'); }
+  if (!j.ok) { if (j.code === 'AUTH') signOutLocal(); throw new Error(j.error); }
+  return j.data;
+}
+function toast(msg, bad) {
+  const t = document.createElement('div'); t.className = 'toast' + (bad ? ' bad' : ''); t.textContent = msg; t.setAttribute('role', bad ? 'alert' : 'status');
+  $('#toasts').appendChild(t); setTimeout(() => t.remove(), 4500);
+}
+async function guard(btn, errEl, fn) {
+  btn.disabled = true; if (errEl) errEl.textContent = '';
+  try { await fn(); } catch (e) { if (errEl) errEl.textContent = e.message; else toast(e.message, true); } finally { btn.disabled = false; }
+}
+
+/* ---------- branding / theme / favicon ---------- */
+function applyTheme(name) {
+  const t = THEMES[name] || THEMES.blue, r = document.documentElement.style;
+  r.setProperty('--brand', t[0]); r.setProperty('--brand2', t[1]); r.setProperty('--side', t[2]);
+  $('#metaTheme').content = t[0];
+  const svg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='" + t[0] + "'/><path d='M10 7h8l5 5v13H10z' fill='#fff'/><path d='M13 17h7M13 21h7' stroke='" + t[0] + "' stroke-width='1.6'/></svg>";
+  $('#fav').href = 'data:image/svg+xml,' + encodeURIComponent(svg);
+}
+function applyBrand(b) {
+  if (!b || !b.systemName) return;
+  applyTheme(b.theme); document.title = b.systemName;
+  document.querySelectorAll('.sysname').forEach((e) => { e.textContent = b.systemName; });
+  $('#orgName').textContent = b.orgName || 'Sign in to access the records.';
+  try { localStorage.setItem('gso_brand', JSON.stringify({ systemName: b.systemName, orgName: b.orgName, theme: b.theme })); } catch (e) {}
+}
+try { applyBrand(JSON.parse(localStorage.getItem('gso_brand'))); } catch (e) {}
+
+/* ---------- instant loading: local cache (stale-while-revalidate) ---------- */
+const ck = (k) => 'gso_c_' + (sessionStorage.getItem('gso_user') || '') + '_' + k;
+const cget = (k) => { try { return JSON.parse(localStorage.getItem(ck(k))); } catch (e) { return null; } };
+const cset = (k, v) => { try { localStorage.setItem(ck(k), JSON.stringify(v)); } catch (e) {} };
+function cclear() { try { Object.keys(localStorage).filter((k) => k.indexOf('gso_c_') === 0).forEach((k) => localStorage.removeItem(k)); } catch (e) {} }
+const strip = (r) => { const o = Object.assign({}, r); delete o._s; delete o._pending; return o; };
+let ptimer = null;
+const persistSoon = () => { clearTimeout(ptimer); ptimer = setTimeout(() => { ptimer = null; persist(); }, 400); }; // coalesces rapid saves into one write
+window.addEventListener('pagehide', () => { if (ptimer) { clearTimeout(ptimer); ptimer = null; persist(); } });
+function persist() { cset('init', { user: S.user, perms: S.perms, records: S.records.filter((r) => !r._pending).map(strip), docTypes: S.docTypes, copyTypes: S.copyTypes, roles: S.roles, divisions: S.divisions, settings: S.settings }); }
+const spin = (n, t) => '<tr><td colspan="' + n + '" class="empty"><span class="spin"></span>' + t + '</td></tr>';
+
+/* ---------- session ---------- */
+const prep = (r) => { delete r._s; return r; };
+const skey = (r) => r._s || (r._s = [r.ID, r.Cabinet, r.Drawer, r.FolderNo, r.FolderName, r.FileNo, r.Description, r.DocType, r.CopyType, r.Remarks, r.FileName].join(' ').toLowerCase()); // built lazily, only when searching
+function applyInit(d) {
+  S.user = d.user; S.perms = d.perms; S.records = d.records.map((r) => prep(Object.assign({}, r))); S.docTypes = d.docTypes; S.copyTypes = d.copyTypes;
+  S.roles = d.roles; S.divisions = d.divisions; S.settings = d.settings; applyBrand(d.settings);
+}
+function showLogin() { $('#appView').hidden = true; $('#loginView').hidden = false; $('#u').focus(); }
+function signOutLocal() { S.token = null; sessionStorage.removeItem('gso_token'); showLogin(); }
+async function refreshInit(fresh) { // background refresh: the screen is already showing cached data
+  applyInit(await api('init', { fresh: !!fresh })); persist(); buildShell();
+}
+async function boot() {
+  if (!S.token) { showLogin(); if (!localStorage.getItem('gso_brand')) api('public').then(applyBrand).catch(() => {}); return; }
+  const c = cget('init');
+  if (c) { applyInit(c); buildShell(); refreshInit(false).catch((e) => { if (S.token) toast('Showing saved data. ' + e.message, true); }); return; } // instant
+  try { applyInit(await api('init')); persist(); buildShell(); } catch (e) { showLogin(); $('#loginErr').textContent = e.message; }
+}
+$('#login').addEventListener('submit', (e) => {
+  e.preventDefault();
+  guard($('#loginBtn'), $('#loginErr'), async () => {
+    const d = await api('login', { username: $('#u').value, password: $('#p').value }); // returns the data too: one round trip
+    S.token = d.token; sessionStorage.setItem('gso_token', d.token); sessionStorage.setItem('gso_user', d.user.username); $('#p').value = '';
+    applyInit(d.init); persist(); buildShell();
+  });
+});
+function bindPw(inp, btn) {
+  btn.addEventListener('click', () => {
+    const show = inp.type === 'password'; inp.type = show ? 'text' : 'password';
+    btn.setAttribute('aria-pressed', String(show)); btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    btn.querySelector('use').setAttribute('href', show ? '#i-eyeoff' : '#i-eye'); inp.focus();
+  });
+}
+bindPw($('#up'), $('#upT'));
+$('#pwT').addEventListener('click', () => {
+  const p = $('#p'), show = p.type === 'password'; p.type = show ? 'text' : 'password';
+  $('#pwT').setAttribute('aria-pressed', String(show)); $('#pwT').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+  $('#pwT use').setAttribute('href', show ? '#i-eyeoff' : '#i-eye'); p.focus();
+});
+function logout() { api('logout').catch(() => {}); cclear(); sessionStorage.removeItem('gso_user'); signOutLocal(); } // no waiting
+setInterval(() => { if (S.token) fetch(CONFIG.API_URL).catch(() => {}); }, 240000); // keeps the server warm while the app is open
+
+/* ---------- pagination (every table): 10 / 30 / 50 / All, remembered per table ---------- */
+const PS_OPTS = ['10', '30', '50', 'all'], PGS = { rec: 1, aud: 1, usr: 1 };
+function psVal(id) { let v = null; try { v = localStorage.getItem('gso_ps_' + id); } catch (e) {} v = v || S.settings.pageSize; return PS_OPTS.indexOf(v) > -1 ? v : '10'; }
+function mountPager(id, render) {
+  const el = $('#pgr-' + id);
+  el.innerHTML = '<span class="pc"></span><span class="pn"><label class="pl">Rows <select class="ps" aria-label="Rows per page"><option value="10">10</option><option value="30">30</option><option value="50">50</option><option value="all">All</option></select></label>' +
+    '<button type="button" class="btn pv">Previous</button><span class="pi"></span><button type="button" class="btn nx">Next</button></span>';
+  el.querySelector('.ps').addEventListener('change', (e) => { try { localStorage.setItem('gso_ps_' + id, e.target.value); } catch (x) {} PGS[id] = 1; render(); });
+  el.querySelector('.pv').addEventListener('click', () => { PGS[id]--; render(); });
+  el.querySelector('.nx').addEventListener('click', () => { PGS[id]++; render(); });
+}
+function slice(id, rows) {
+  const el = $('#pgr-' + id), v = psVal(id), size = v === 'all' ? Math.max(rows.length, 1) : Number(v), pages = Math.max(1, Math.ceil(rows.length / size));
+  PGS[id] = Math.min(Math.max(PGS[id], 1), pages); const from = (PGS[id] - 1) * size, to = Math.min(from + size, rows.length);
+  el.querySelector('.ps').value = v; el.querySelector('.pc').textContent = rows.length + (rows.length === 1 ? ' record' : ' records') + (rows.length ? ' · showing ' + (from + 1) + '–' + to : '');
+  el.querySelector('.pi').textContent = 'Page ' + PGS[id] + ' of ' + pages; el.querySelector('.pv').disabled = PGS[id] <= 1; el.querySelector('.nx').disabled = PGS[id] >= pages;
+  return rows.slice(from, from + size);
+}
+
+/* ---------- shell & sidebar ---------- */
+const navBtn = (i) => '<button class="nav-item" data-page="' + i[0] + '" data-tip="' + i[2] + '">' + ico(i[1]) + '<span class="lbl">' + i[2] + '</span></button>';
+function buildShell() {
+  $('#loginView').hidden = true; $('#appView').hidden = false;
+  renderMe();
+  const main = [['dashboard', 'dash', 'Dashboard'], ['records', 'file', 'Records']]; if (can('audit')) main.push(['audit', 'log', 'Audit Logs']);
+  const foot = []; if (can('users')) foot.push(['users', 'users', 'Users & Roles']); if (can('settings')) foot.push(['setup', 'gear', 'System Setup']);
+  $('#nav').innerHTML = main.map(navBtn).join('');
+  $('#navFoot').innerHTML = foot.map(navBtn).join('') + '<button class="nav-item" id="logout" data-tip="Sign out">' + ico('out') + '<span class="lbl">Sign out</span></button>';
+  $('#add').hidden = !can('create'); $('#appView').classList.remove('mopen'); $('#scrim').hidden = true;
+  setCollapsed(localStorage.getItem('gso_collapsed') === '1'); fillFilters(); go(S.page);
+  setTimeout(() => { if (S.token && can('audit')) loadLogs(true); if (S.token && can('users')) loadUsers(true); }, 1500); // warm the other tabs
+}
+function setCollapsed(c) {
+  $('#appView').classList.toggle('collapsed', c); $('#toggle').setAttribute('aria-expanded', String(!c));
+  try { localStorage.setItem('gso_collapsed', c ? '1' : '0'); } catch (e) {}
+}
+function setDrawer(open) { $('#appView').classList.toggle('mopen', open); $('#scrim').hidden = !open; $('#toggle').setAttribute('aria-expanded', String(open)); }
+$('#toggle').addEventListener('click', () => { if (isMobile()) setDrawer(!$('#appView').classList.contains('mopen')); else setCollapsed(!$('#appView').classList.contains('collapsed')); });
+$('#scrim').addEventListener('click', () => setDrawer(false));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setDrawer(false); });
+document.addEventListener('click', (e) => {
+  const n = e.target.closest('[data-page]'); if (n) { go(n.dataset.page); return; }
+  if (e.target.closest('#logout')) { logout(); return; }
+  const c = e.target.closest('[data-close]'); if (c) $('#' + c.dataset.close).close();
+});
+const NEEDS = { users: 'users', setup: 'settings', audit: 'audit' }; // Admin-only modules
+function go(p) {
+  if (NEEDS[p] && !can(NEEDS[p])) { toast('Only Administrators can open that module.', true); p = 'dashboard'; }
+  S.page = p; setDrawer(false);
+  Object.keys(TITLES).forEach((n) => { $('#pg-' + n).hidden = n !== p; });
+  document.querySelectorAll('.nav-item[data-page]').forEach((b) => b.classList.toggle('on', b.dataset.page === p));
+  $('#title').textContent = TITLES[p]; if (p !== 'setup') applyTheme(S.settings.theme);
+  if (p === 'dashboard') renderDash(); if (p === 'records') renderRecords(); if (p === 'users') loadUsers(); if (p === 'audit') loadLogs(); if (p === 'setup') fillSetup();
+  window.scrollTo(0, 0);
+}
+
+/* ---------- dashboard ---------- */
+const tally = (arr, fn) => arr.reduce((m, r) => { const k = fn(r); m[k] = (m[k] || 0) + 1; return m; }, {});
+function bars(m) {
+  const e = Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, 10), mx = e.length ? e[0][1] : 1;
+  return e.map((x) => '<div class="bar"><span>' + esc(x[0]) + '</span><i style="--w:' + (x[1] / mx * 100) + '%"></i><b>' + x[1] + '</b></div>').join('') || '<p class="mute">No data yet.</p>';
+}
+function renderDash() {
+  const R = S.records, folders = Object.keys(tally(R, (r) => [r.Cabinet, r.Drawer, r.FolderNo, r.FolderName].join('|'))).length;
+  const card = (l, v) => '<div class="card stat"><span>' + l + '</span><b>' + v + '</b></div>';
+  $('#stats').innerHTML = card('Total records', R.length) + card('Cabinets', Object.keys(tally(R, (r) => r.Cabinet)).length) + card('Folders', folders) + card('Missing description', R.filter((r) => !r.Description).length);
+  $('#byType').innerHTML = bars(tally(R, (r) => r.DocType || 'Other')); $('#byLoc').innerHTML = bars(tally(R, (r) => r.Cabinet + ' · Drawer ' + r.Drawer));
+}
+
+/* ---------- records ---------- */
+const optHtml = (arr) => arr.map((t) => '<option>' + esc(t) + '</option>').join('');
+function fillOptions() {
+  $('#ft').innerHTML = optHtml(S.docTypes) + (can('options') ? '<option value="__new">＋ Add new document type…</option>' : '');
+  $('#fy').innerHTML = '<option value="">— none —</option>' + optHtml(S.copyTypes) + (can('options') ? '<option value="__new">＋ Add new copy type…</option>' : '');
+  $('#fType').innerHTML = '<option value="">All document types</option>' + optHtml(S.docTypes); $('#fType').value = S.type;
+}
+function fillFilters() {
+  const cabs = Object.keys(tally(S.records, (r) => r.Cabinet)).sort(nat);
+  $('#fCab').innerHTML = '<option value="">All cabinets</option>' + optHtml(cabs); $('#fCab').value = S.cab; fillOptions();
+  $('#dlCab').innerHTML = cabs.map((c) => '<option value="' + esc(c) + '">').join('');
+  $('#dlFolder').innerHTML = Object.keys(tally(S.records, (r) => r.FolderName)).filter(Boolean).sort().map((c) => '<option value="' + esc(c) + '">').join('');
+}
+const cmp = (a, b) => nat(a.Cabinet, b.Cabinet) || nat(a.Drawer, b.Drawer) || nat(a.FolderNo, b.FolderNo) || nat(a.FileNo, b.FileNo);
+function rowHtml(r) {
+  const id = esc(r.ID), acts = r._pending ? '<span class="spin" title="Saving…"></span>' : (r.HasFile ? '<button class="icon-btn has" data-act="file" data-id="' + id + '" aria-label="Open attached PDF" title="Open attached PDF: ' + esc(r.FileName) + '">' + ico('file') + '</button>' : '') + '<button class="icon-btn" data-act="view" data-id="' + id + '" aria-label="View record" title="View details">' + ico('eye') + '</button>' +
+    (can('update') ? '<button class="icon-btn" data-act="edit" data-id="' + id + '" aria-label="Edit record" title="Edit">' + ico('edit') + '</button>' : '') +
+    (can('delete') ? '<button class="icon-btn del" data-act="del" data-id="' + id + '" aria-label="Delete record" title="Delete">' + ico('trash') + '</button>' : '');
+  return '<tr data-id="' + id + '"' + (r._pending ? ' class="pend"' : '') + '><td class="loc" data-label="Location"><div><b>Cabinet ' + esc(r.Cabinet) + '</b><span>Drawer ' + esc(r.Drawer) + (r.FolderNo ? ' · Folder ' + esc(r.FolderNo) : '') + (r.FileNo ? ' · File ' + esc(r.FileNo) : '') + '</span></div></td>' +
+    '<td data-label="Folder"><div>' + (esc(r.FolderName) || '<span class="mute">—</span>') + '</div></td><td class="desc" data-label="Description"><div>' + esc(r.Description) + '</div></td>' +
+    '<td data-label="Type"><div><span class="badge">' + esc(r.DocType) + '</span>' + (r.CopyType ? '<span class="badge alt">' + esc(r.CopyType) + '</span>' : '') + '</div></td>' +
+    '<td class="rem" data-label="Remarks"><div>' + (esc(r.Remarks) || '—') + '</div></td><td class="act" data-label="Action">' + acts + '</td></tr>';
+}
+function renderRecords() {
+  const q = S.q.toLowerCase(), rows = S.records.filter((r) => (!S.cab || r.Cabinet === S.cab) && (!S.type || r.DocType === S.type) && (!q || skey(r).indexOf(q) > -1)).sort(cmp);
+  $('#recBody').innerHTML = rows.length ? slice('rec', rows).map(rowHtml).join('') : (slice('rec', rows), '<tr><td colspan="6" class="empty">No records match your search or filters.</td></tr>');
+}
+let qt; $('#q').addEventListener('input', (e) => { const v = e.target.value.trim(); clearTimeout(qt); qt = setTimeout(() => { S.q = v; PGS.rec = 1; renderRecords(); }, 120); }); // debounced for smooth typing
+$('#fCab').addEventListener('change', (e) => { S.cab = e.target.value; PGS.rec = 1; renderRecords(); });
+$('#fType').addEventListener('change', (e) => { S.type = e.target.value; PGS.rec = 1; renderRecords(); });
+$('#refresh').addEventListener('click', (e) => guard(e.currentTarget, null, async () => { await refreshInit(true); toast('Records refreshed.'); }));
+const byId = (id) => S.records.find((x) => x.ID === id);
+$('#recBody').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-act]'); if (!b) return; const r = byId(b.dataset.id); if (!r || r._pending) return;
+  if (b.dataset.act === 'file') openFile(r); else if (b.dataset.act === 'view') openView(r); else if (b.dataset.act === 'edit') openRec(r); else openDel(r);
+});
+$('#recBody').addEventListener('dblclick', (e) => { const tr = e.target.closest('tr[data-id]'); if (tr && !e.target.closest('button')) { const r = byId(tr.dataset.id); if (r && !r._pending) openView(r); } });
+$('#add').addEventListener('click', () => openRec(null));
+
+/* ---------- PDF attachments (uploaded after the record is saved, so saving stays instant) ---------- */
+const swap = (r) => { const j = S.records.findIndex((x) => x.ID === r.ID); if (j > -1) S.records[j] = r; renderRecords(); };
+function attach(id, file) {
+  const rec = byId(id); if (!rec) return; rec._pending = true; renderRecords(); toast('Uploading PDF…');
+  const fr = new FileReader();
+  fr.onerror = () => { delete rec._pending; renderRecords(); toast('Could not read that file.', true); };
+  fr.onload = () => api('file.upload', { ID: id, name: file.name, data: String(fr.result).split(',')[1] })
+    .then((r) => { swap(prep(r)); persistSoon(); toast('PDF attached.'); })
+    .catch((e) => { delete rec._pending; renderRecords(); toast('PDF upload failed: ' + e.message, true); });
+  fr.readAsDataURL(file);
+}
+function detach(id) {
+  const rec = byId(id); if (!rec) return; rec._pending = true; renderRecords();
+  api('file.remove', { ID: id }).then((r) => { swap(prep(r)); persistSoon(); toast('Attachment removed.'); }).catch((e) => { delete rec._pending; renderRecords(); toast(e.message, true); });
+}
+async function openFile(r) { // files stay private in Drive; the server streams them only to signed-in users
+  const win = window.open('', '_blank'); if (win) win.document.write('<p style="font-family:sans-serif;padding:24px">Loading PDF…</p>'); else toast('Opening PDF…');
+  try {
+    const f = await api('file.get', { ID: r.ID }), bin = atob(f.data), bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' }));
+    if (win) win.location.href = url; else { const a = document.createElement('a'); a.href = url; a.download = f.name; a.click(); }
+    setTimeout(() => URL.revokeObjectURL(url), 120000);
+  } catch (e) { if (win) win.close(); toast(e.message, true); }
+}
+function openView(r) {
+  S.view = r; const row = (k, v, full) => '<div class="' + (full ? 'full' : '') + '"><dt>' + k + '</dt><dd>' + (esc(v) || '—') + '</dd></div>', t = (v) => String(v || '').replace('T', ' ');
+  $('#viewTitle').textContent = 'Record ' + r.ID;
+  $('#viewBody').innerHTML = row('Cabinet', r.Cabinet) + row('Drawer', r.Drawer) + row('Folder #', r.FolderNo) + row('File #', r.FileNo) + row('Folder name', r.FolderName, 1) + row('File description', r.Description, 1) +
+    row('Document type', r.DocType) + row('Copy type', r.CopyType) + row('Remarks', r.Remarks, 1) + row('Attachment', r.HasFile ? r.FileName : '', 1) + row('Created', t(r.CreatedAt) + ' by ' + r.CreatedBy) + row('Last updated', t(r.UpdatedAt) + ' by ' + r.UpdatedBy);
+  $('#viewFile').hidden = !r.HasFile; $('#viewEdit').hidden = !can('update'); $('#viewDel').hidden = !can('delete'); $('#viewDlg').showModal();
+  api('audit.view', { ID: r.ID }).catch(() => {}); // activity is logged server-side
+}
+$('#viewFile').addEventListener('click', () => openFile(S.view));
+$('#viewEdit').addEventListener('click', () => { $('#viewDlg').close(); openRec(S.view); });
+$('#viewDel').addEventListener('click', () => { $('#viewDlg').close(); openDel(S.view); });
+
+const RF = ['ID', 'Version', 'Cabinet', 'Drawer', 'FolderNo', 'FolderName', 'FileNo', 'Description', 'DocType', 'CopyType', 'Remarks'];
+function toggleNew() { $('#newDocW').hidden = $('#ft').value !== '__new'; $('#newCopyW').hidden = $('#fy').value !== '__new'; }
+$('#ft').addEventListener('change', () => { toggleNew(); if ($('#ft').value === '__new') $('#newDoc').focus(); });
+$('#fy').addEventListener('change', () => { toggleNew(); if ($('#fy').value === '__new') $('#newCopy').focus(); });
+function openRec(r) {
+  const f = $('#recForm'); $('#recTitle').textContent = r && r.ID ? 'Edit record ' + r.ID : 'Add record'; $('#recErr').textContent = '';
+  RF.forEach((k) => { f.elements[k].value = r ? (r[k] == null ? '' : r[k]) : (k === 'DocType' ? 'Other' : ''); }); $('#newDoc').value = ''; $('#newCopy').value = '';
+  if (!r && S.cab) f.elements.Cabinet.value = S.cab; toggleNew(); $('#fileW').hidden = !can('attach'); $('#fa').value = ''; $('#faRm').checked = false; $('#faRmW').hidden = !(r && r.ID && r.HasFile); $('#faInfo').textContent = r && r.HasFile ? 'Current file: ' + r.FileName : 'No file attached.';
+  $('#recDlg').showModal(); f.elements.Cabinet.focus();
+}
+async function resolveOpt(kind, sel, inp, list) { // Admins/Editors only: server re-checks the 'options' permission
+  if (sel.value !== '__new') return sel.value;
+  const v = inp.value.trim(); if (!v) throw new Error('Type the new ' + (kind === 'doc' ? 'document' : 'copy') + ' type, or pick one from the list.');
+  const res = await api('option.add', { kind: kind, value: v }); if (list.indexOf(res.value) < 0) list.push(res.value); return res.value;
+}
+function commit(d, file, rm) { // optimistic: the table updates at once; the server confirms in the background and we roll back on error
+  const isNew = !d.ID, prev = isNew ? null : byId(d.ID), tmp = isNew ? 'NEW-' + Date.now() : d.ID, now = new Date().toISOString().slice(0, 19);
+  const opt = prep(Object.assign({ Status: 'Active', Version: '0', CreatedAt: now, CreatedBy: S.user.username }, prev || {}, d, { ID: tmp, UpdatedAt: now, UpdatedBy: S.user.username, _pending: true }));
+  const i = S.records.findIndex((x) => x.ID === tmp); if (i < 0) S.records.push(opt); else S.records[i] = opt;
+  $('#recDlg').close(); fillFilters(); renderRecords();
+  api('record.save', d).then((res) => {
+    const r = prep(res), j = S.records.findIndex((x) => x.ID === tmp); if (j < 0) S.records.push(r); else S.records[j] = r;
+    persistSoon(); fillFilters(); renderRecords(); toast(isNew ? 'Record added.' : 'Record updated.');
+    if (file) attach(r.ID, file); else if (rm) detach(r.ID);
+  }).catch((err) => {
+    const j = S.records.findIndex((x) => x.ID === tmp); if (j > -1) { if (prev) S.records[j] = prev; else S.records.splice(j, 1); }
+    fillFilters(); renderRecords(); openRec(Object.assign({}, d)); $('#recErr').textContent = err.message; toast(err.message, true);
+  });
+}
+$('#recForm').addEventListener('submit', (e) => {
+  e.preventDefault(); const f = e.target, d = {}; RF.forEach((k) => { d[k] = f.elements[k].value; });
+  if (!d.Cabinet.trim() || !d.Drawer.trim()) { $('#recErr').textContent = 'Cabinet # and Drawer # are required.'; return; }
+  if (!d.FolderName.trim() && !d.Description.trim()) { $('#recErr').textContent = 'Enter a folder name or a file description.'; return; }
+  guard($('#recSave'), $('#recErr'), async () => {
+    d.DocType = await resolveOpt('doc', $('#ft'), $('#newDoc'), S.docTypes); d.CopyType = await resolveOpt('copy', $('#fy'), $('#newCopy'), S.copyTypes);
+    const file = can('attach') ? $('#fa').files[0] : null;
+    if (file && !(file.type === 'application/pdf' || /\.pdf$/i.test(file.name))) throw new Error('Only PDF files can be attached.');
+    if (file && file.size > 8 * 1024 * 1024) throw new Error('That PDF is larger than 8 MB.');
+    commit(d, file, can('attach') && $('#faRm').checked && !file);
+  });
+});
+function openDel(r) { S.view = r; $('#delErr').textContent = ''; $('#delInfo').textContent = r.ID + ' — Cabinet ' + r.Cabinet + ', Drawer ' + r.Drawer + ': ' + (r.FolderName || r.Description).slice(0, 140); $('#delDlg').showModal(); }
+$('#delForm').addEventListener('submit', (e) => {
+  e.preventDefault(); const r = S.view; S.records = S.records.filter((x) => x.ID !== r.ID); $('#delDlg').close(); fillFilters(); renderRecords(); toast('Record deleted.');
+  api('record.delete', { ID: r.ID, Version: r.Version }).then(persistSoon).catch((err) => { S.records.push(r); fillFilters(); renderRecords(); toast('Delete failed: ' + err.message, true); });
+});
+
+/* ---------- audit logs ---------- */
+const actCls = (a) => /DELETE|FAILED/.test(a) ? 'off' : /CREATE|LOGIN$|OPTION/.test(a) ? 'ok' : /VIEW|LOGOUT/.test(a) ? 'alt' : '';
+function fillActs() { const cur = $('#aAct').value; $('#aAct').innerHTML = '<option value="">All actions</option>' + optHtml(Object.keys(tally(S.logs, (l) => l.action)).sort()); $('#aAct').value = cur; }
+async function loadLogs(quiet) { // shows cached rows instantly, then refreshes
+  if (!S.logs.length) S.logs = cget('audit') || [];
+  if (S.logs.length) { fillActs(); renderLogs(); } else if (!quiet) $('#audBody').innerHTML = spin(6, 'Loading audit logs…');
+  try { S.logs = await api('audit.list'); cset('audit', S.logs); fillActs(); renderLogs(); }
+  catch (e) { if (!S.logs.length && !quiet) $('#audBody').innerHTML = '<tr><td colspan="6" class="empty">' + esc(e.message) + '</td></tr>'; else if (!quiet) toast(e.message, true); }
+}
+function renderLogs() {
+  const q = $('#aq').value.trim().toLowerCase(), a = $('#aAct').value;
+  const rows = S.logs.filter((l) => (!a || l.action === a) && (!q || [l.user, l.action, l.entity, l.id, l.details].join(' ').toLowerCase().indexOf(q) > -1));
+  $('#audBody').innerHTML = rows.length ? slice('aud', rows).map((l) => '<tr><td data-label="Date & time"><div style="white-space:nowrap">' + esc(l.time) + '</div></td><td data-label="User"><div><b>' + esc(l.user) + '</b></div></td>' +
+    '<td data-label="Action"><div><span class="badge ' + actCls(l.action) + '">' + esc(l.action) + '</span></div></td><td data-label="Entity"><div>' + esc(l.entity) + '</div></td><td data-label="Target"><div>' + esc(l.id) + '</div></td>' +
+    '<td class="rem" data-label="Details"><div>' + esc(l.details) + '</div></td></tr>').join('') : (slice('aud', rows), '<tr><td colspan="6" class="empty">No activity found.</td></tr>');
+}
+$('#aq').addEventListener('input', () => { PGS.aud = 1; renderLogs(); }); $('#aAct').addEventListener('change', () => { PGS.aud = 1; renderLogs(); });
+$('#aRef').addEventListener('click', (e) => guard(e.currentTarget, null, () => loadLogs(false)));
+
+/* ---------- users & roles ---------- */
+async function loadUsers(quiet) {
+  if (!S.users.length) S.users = cget('users') || [];
+  if (S.users.length) renderUsers(); else if (!quiet) $('#usrBody').innerHTML = spin(9, 'Loading users…');
+  try { S.users = await api('user.list'); cset('users', S.users); renderUsers(); }
+  catch (e) { if (!S.users.length && !quiet) $('#usrBody').innerHTML = '<tr><td colspan="9" class="empty">' + esc(e.message) + '</td></tr>'; else if (!quiet) toast(e.message, true); }
+}
+function renderUsers() {
+  $('#usrBody').innerHTML = slice('usr', S.users).map((u) => '<tr><td data-label="Username"><div><b>' + esc(u.username) + '</b></div></td><td data-label="Name"><div>' + esc(u.fullName) + '</div></td>' +
+    '<td data-label="Email"><div style="word-break:break-all">' + (esc(u.email) || '<span class="mute">—</span>') + '</div></td><td data-label="Role"><div><span class="badge">' + esc(u.role) + '</span></div></td>' +
+    '<td data-label="Division"><div>' + (esc(u.division) || '<span class="mute">—</span>') + '</div></td><td data-label="Cabinets"><div>' + esc(u.cabinets) + '</div></td>' +
+    '<td data-label="Status"><div><span class="badge ' + (u.status === 'Active' ? 'ok' : 'off') + '">' + esc(u.status) + '</span></div></td><td data-label="Last login"><div>' + esc(u.lastLogin ? u.lastLogin.replace('T', ' ') : '—') + '</div></td>' +
+    '<td class="act" data-label="Action"><button class="icon-btn" data-user="' + esc(u.username) + '" aria-label="Edit user ' + esc(u.username) + '" title="Edit">' + ico('edit') + '</button></td></tr>').join('');
+}
+function openUser(u) {
+  const f = $('#usrForm'); $('#usrTitle').textContent = u ? 'Edit user' : 'Add user'; $('#usrErr').textContent = '';
+  $('#ur').innerHTML = optHtml(S.roles); $('#ud').innerHTML = '<option value="">— none —</option>' + optHtml(S.divisions);
+  f.elements.username.value = u ? u.username : ''; f.elements.username.readOnly = !!u; f.elements.fullName.value = u ? u.fullName : ''; f.elements.email.value = u ? u.email : '';
+  f.elements.role.value = u ? u.role : 'Viewer'; f.elements.status.value = u ? u.status : 'Active'; f.elements.division.value = u ? u.division : '';
+  f.elements.cabinets.value = u ? u.cabinets : '*'; f.elements.password.value = ''; f.elements.password.type = 'password'; $('#upT').setAttribute('aria-pressed', 'false'); $('#upT').setAttribute('aria-label', 'Show password'); $('#upT use').setAttribute('href', '#i-eye');
+  $('#upHint').textContent = u ? '— leave blank to keep the current password' : '— 8+ characters, letters and numbers';
+  $('#usrDlg').showModal(); (u ? f.elements.fullName : f.elements.username).focus();
+}
+$('#addUser').addEventListener('click', () => openUser(null));
+$('#usrBody').addEventListener('click', (e) => { const b = e.target.closest('[data-user]'); if (b) openUser(S.users.find((u) => u.username === b.dataset.user)); });
+$('#usrForm').addEventListener('submit', (e) => {
+  e.preventDefault(); const f = e.target, d = {};
+  ['username', 'fullName', 'email', 'role', 'status', 'division', 'cabinets', 'password'].forEach((k) => { d[k] = f.elements[k].value; });
+  guard($('#usrSave'), $('#usrErr'), async () => { await api('user.save', d); $('#usrDlg').close(); toast('User saved.'); loadUsers(); });
+});
+
+/* ---------- system setup (Admin only) ---------- */
+let pickedTheme = 'blue';
+function pickTheme(n) { pickedTheme = n; applyTheme(n); document.querySelectorAll('.sw').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.theme === n))); }
+function fillSetup() {
+  const f = $('#setForm'), s = S.settings; $('#setErr').textContent = '';
+  f.elements.systemName.value = s.systemName; f.elements.orgName.value = s.orgName; f.elements.pageSize.value = PS_OPTS.indexOf(s.pageSize) > -1 ? s.pageSize : '10';
+  f.elements.sessionHours.value = s.sessionHours;
+  $('#swatches').innerHTML = Object.keys(THEMES).map((n) => '<button type="button" class="sw" data-theme="' + n + '" style="--c:' + THEMES[n][0] + '" aria-label="' + n + ' theme" title="' + n + '" aria-pressed="false"></button>').join('');
+  pickTheme(s.theme);
+}
+$('#swatches').addEventListener('click', (e) => { const b = e.target.closest('.sw'); if (b) pickTheme(b.dataset.theme); });
+$('#setForm').addEventListener('submit', (e) => {
+  e.preventDefault(); const f = e.target;
+  const d = { systemName: f.elements.systemName.value, orgName: f.elements.orgName.value, theme: pickedTheme, pageSize: f.elements.pageSize.value, sessionHours: f.elements.sessionHours.value };
+  guard($('#setSave'), $('#setErr'), async () => {
+    S.settings = await api('settings.save', d); applyBrand(S.settings); S.perms = (await api('init')).perms; buildShell(); persist(); toast('Settings saved.');
+  });
+});
+
+/* ---------- my profile (every user) ---------- */
+const initials = (n) => String(n || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+const avatar = (el, u) => { el.innerHTML = u.photo ? '<img alt="" src="' + esc(u.photo) + '">' : esc(initials(u.fullName || u.username)); };
+function renderMe() { $('#who').textContent = S.user.fullName; $('#role').textContent = S.user.role + (S.user.division ? ' · ' + S.user.division : ''); avatar($('#meAv'), S.user); }
+let proPhoto; // undefined = keep, '' = remove, data URL = new photo
+function resetPw(id) { const i = $('#' + id), b = document.querySelector('[data-pw=' + id + ']'); i.value = ''; i.type = 'password'; b.setAttribute('aria-pressed', 'false'); b.setAttribute('aria-label', 'Show password'); b.querySelector('use').setAttribute('href', '#i-eye'); }
+$('#me').addEventListener('click', () => {
+  proPhoto = undefined; $('#proErr').textContent = ''; $('#proFile').value = '';
+  $('#pn').value = S.user.fullName; $('#pe').value = S.user.email || ''; ['pc', 'pp', 'pq'].forEach(resetPw); avatar($('#proAv'), S.user);
+  $('#proDlg').showModal(); $('#pn').focus();
+});
+document.querySelectorAll('[data-pw]').forEach((b) => bindPw($('#' + b.dataset.pw), b));
+$('#proUp').addEventListener('click', () => $('#proFile').click());
+$('#proRm').addEventListener('click', () => { proPhoto = ''; avatar($('#proAv'), { fullName: $('#pn').value }); });
+function toSquareJpeg(file) { // crop to a centered square, shrink, and compress until it is small enough to store
+  return new Promise((res, rej) => {
+    if (!/^image\//.test(file.type)) return rej(new Error('Please choose an image file (JPG or PNG).'));
+    if (file.size > 8 * 1024 * 1024) return rej(new Error('That image is too large. Choose one under 8 MB.'));
+    const fr = new FileReader(); fr.onerror = () => rej(new Error('Could not read that file.'));
+    fr.onload = () => {
+      const img = new Image(); img.onerror = () => rej(new Error('That file is not a valid image.'));
+      img.onload = () => {
+        const side = Math.min(img.width, img.height), c = document.createElement('canvas'), ctx = c.getContext('2d'); c.width = c.height = 220;
+        ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, 220, 220); ctx.drawImage(img, (img.width - side) / 2, (img.height - side) / 2, side, side, 0, 0, 220, 220);
+        let q = 0.85, out = c.toDataURL('image/jpeg', q); while (out.length > 40000 && q > 0.3) { q -= 0.1; out = c.toDataURL('image/jpeg', q); }
+        out.length > 40000 ? rej(new Error('Could not shrink that image enough. Try another one.')) : res(out);
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+$('#proFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try { proPhoto = await toSquareJpeg(f); avatar($('#proAv'), { photo: proPhoto }); $('#proErr').textContent = ''; } catch (er) { $('#proErr').textContent = er.message; }
+});
+$('#proForm').addEventListener('submit', (e) => {
+  e.preventDefault(); const f = e.target, np = f.elements.newPassword.value;
+  if (f.elements.fullName.value.trim().length < 2) { $('#proErr').textContent = 'Enter your full name.'; return; }
+  if (np && !f.elements.currentPassword.value) { $('#proErr').textContent = 'Enter your current password to set a new one.'; return; }
+  if (np !== f.elements.confirm.value) { $('#proErr').textContent = 'New password and confirmation do not match.'; return; }
+  const d = { fullName: f.elements.fullName.value, email: f.elements.email.value, currentPassword: f.elements.currentPassword.value, newPassword: np };
+  if (proPhoto !== undefined) d.photo = proPhoto;
+  guard($('#proSave'), $('#proErr'), async () => {
+    const u = await api('profile.save', d); S.user = Object.assign({}, S.user, u); delete S.user.warning; persistSoon(); renderMe(); $('#proDlg').close(); toast(np ? 'Profile and password updated.' : 'Profile updated.'); if (u.warning) toast(u.warning, true);
+  });
+});
+
+mountPager('rec', renderRecords); mountPager('aud', renderLogs); mountPager('usr', renderUsers);
+boot();
+</script>
+</body>
+</html>
